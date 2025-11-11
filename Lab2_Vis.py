@@ -4,7 +4,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from pyvis.network import Network
 
-# ---------- CONFIG ----------
 EDGE_LIST_CSV = "actors_edgelist.csv"
 GRAPH_GML = "actors_graph.gml"
 OUTPUT_GML_SMALL = "actors_graph_small.gml"
@@ -12,10 +11,9 @@ OUTPUT_ADJ_CSV = "actors_adjacency.csv"
 OUTPUT_INC_CSV = "actors_incidence.csv"
 PYVIS_HTML = "actors_pyvis.html"
 
-N_NODES = 200        # docelowa liczba wierzchołków (100-500)
-MAX_EDGES = 200      # maksymalna liczba krawędzi (<200 wymagane przez zadanie)
-LABEL_DEGREE_THRESHOLD = 2  # pokazuj etykiety tylko dla węzłów o deg >= progu
-# ----------------------------
+N_NODES = 200
+MAX_EDGES = 200
+LABEL_DEGREE_THRESHOLD = 2
 
 def load_graph():
     if os.path.exists(GRAPH_GML):
@@ -46,7 +44,6 @@ def load_graph():
     raise FileNotFoundError("Brak actors_graph.gml i actors_edgelist.csv w katalogu.")
 
 def reduce_by_degree_and_prune_edges(G, n_nodes=N_NODES, max_edges=MAX_EDGES):
-    # wybierz top-n węzłów po stopniu
     if G.number_of_nodes() > n_nodes:
         nodes_sorted = sorted(G.degree(), key=lambda x: x[1], reverse=True)
         top_nodes = [node for node, _ in nodes_sorted[:n_nodes]]
@@ -54,13 +51,11 @@ def reduce_by_degree_and_prune_edges(G, n_nodes=N_NODES, max_edges=MAX_EDGES):
     else:
         Gs = G.copy()
 
-    # jeżeli zbyt dużo krawędzi -> zachowaj najsilniejsze (wg weight lub alternatywnie wg sumy stopni)
     if Gs.number_of_edges() > max_edges:
         edges_with_score = []
         for u, v, d in Gs.edges(data=True):
             w = d.get("weight", None)
             if w is None:
-                # fallback: prefer edges łączące węzły o większym stopniu
                 score = Gs.degree(u) + Gs.degree(v)
             else:
                 score = float(w)
@@ -69,7 +64,6 @@ def reduce_by_degree_and_prune_edges(G, n_nodes=N_NODES, max_edges=MAX_EDGES):
         keep_edges = [e for e, _ in edges_with_score[:max_edges]]
 
         Gpr = nx.Graph()
-        # dodaj tylko węzły, które występują w zachowanych krawędziach
         nodes_to_keep = set()
         for u, v in keep_edges:
             nodes_to_keep.add(u); nodes_to_keep.add(v)
@@ -77,7 +71,6 @@ def reduce_by_degree_and_prune_edges(G, n_nodes=N_NODES, max_edges=MAX_EDGES):
         for u, v in keep_edges:
             if Gs.has_edge(u, v):
                 Gpr.add_edge(u, v, **Gs.edges[u, v])
-        # usuń izolaty (na wszelki wypadek)
         isolates = list(nx.isolates(Gpr))
         if isolates:
             Gpr.remove_nodes_from(isolates)
@@ -90,10 +83,8 @@ def reduce_by_degree_and_prune_edges(G, n_nodes=N_NODES, max_edges=MAX_EDGES):
         return Gs
 
 def save_matrices(G):
-    # macierz sąsiedztwa (0/1)
     adj = nx.to_pandas_adjacency(G, dtype=int, weight=None)
     adj.to_csv(OUTPUT_ADJ_CSV)
-    # macierz incydencji
     inc = nx.incidence_matrix(G, oriented=False).todense()
     inc_df = pd.DataFrame(inc, index=list(G.nodes()), columns=[f"{u}-{v}" for u, v in G.edges()])
     inc_df.to_csv(OUTPUT_INC_CSV)
@@ -104,7 +95,6 @@ def viz_nx(G, figsize=(22,18), use_kamada=False):
     if use_kamada:
         pos = nx.kamada_kawai_layout(G, scale=30)
     else:
-        # ekstremalne rozciągnięcie: duże k, dużo iteracji
         pos = nx.spring_layout(G, seed=42, k=30.0, iterations=3000)
 
     deg = dict(G.degree())
@@ -120,7 +110,6 @@ def viz_nx(G, figsize=(22,18), use_kamada=False):
     nx.draw_networkx_edges(G, pos, alpha=0.18, width=widths)
     nx.draw_networkx_nodes(G, pos, node_size=node_sizes, node_color="skyblue", edgecolors="k", linewidths=0.25)
 
-    # etykiety tylko dla ważnych węzłów (próg)
     labels = {n: str(n) for n in G.nodes() if deg[n] >= LABEL_DEGREE_THRESHOLD}
     offset_pos = {n: (x + 0.08, y + 0.08) for n, (x, y) in pos.items() if n in labels}
     nx.draw_networkx_labels(G, offset_pos, labels, font_size=9,
@@ -138,7 +127,6 @@ def viz_pyvis(G, height="900px", width="100%", physics=True):
         net.add_edge(u, v, value=d.get("weight", 1.0), title=f"w:{d.get('weight',1.0)}")
 
     if physics:
-        # mocne odpychanie i dłuższe sprężyny by rozsunąć węzły
         net.barnes_hut(gravity=-30000, central_gravity=0.01, spring_length=300, spring_strength=0.01, damping=0.09)
         net.set_options("""
         var options = {
