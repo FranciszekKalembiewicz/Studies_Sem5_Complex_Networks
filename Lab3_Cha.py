@@ -8,10 +8,8 @@ GRAPH_SMALL_GML = "actors_graph_small.gml"
 def load_graph(filename=GRAPH_SMALL_GML):
     if os.path.exists(filename):
         G = nx.read_gml(filename)
-        # upewnij się, że graf jest nieskierowany
         return G.to_undirected() if G.is_directed() else G
     raise FileNotFoundError(f"Brak pliku {filename}")
-
 
 def compute_network_properties(G):
     rzad = G.number_of_nodes()
@@ -19,7 +17,6 @@ def compute_network_properties(G):
     sredni_stopien = 2 * rozmiar / rzad if rzad > 0 else 0
     gestosc = nx.density(G)
 
-    # Największa spójna składowa dla niespójnych grafów
     if nx.is_connected(G):
         Gcc = G
     else:
