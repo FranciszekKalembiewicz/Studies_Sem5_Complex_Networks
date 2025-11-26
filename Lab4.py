@@ -56,5 +56,3 @@ plt.title(f"Graf dwudzielny: Top {top_n_actors} aktorów i ich filmy", fontsize=
 plt.axis("off")
 plt.tight_layout()
 plt.show()
-
-print("Gotowe!\nZapisano pliki: Lab4_edge_list.csv, Lab4_biadjacency_matrix.csv, Lab4_adjacency_matrix.csv")
