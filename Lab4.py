@@ -1,7 +1,9 @@
 import pandas as pd
 import networkx as nx
+import numpy as np
 import matplotlib.pyplot as plt
 from networkx.algorithms.bipartite.matrix import biadjacency_matrix
+from networkx.algorithms import bipartite
 
 INPUT = "imdb_top_1000.csv"
 
@@ -54,5 +56,31 @@ plt.figure(figsize=(12, 14))
 nx.draw(B, pos, with_labels=False, node_size=50, node_color=color_map, width=0.5, alpha=0.9)
 plt.title(f"Graf dwudzielny: Top {top_n_actors} aktorów i ich filmy", fontsize=16)
 plt.axis("off")
+plt.show()
+
+plt.figure(figsize=(14, 10))
+pos2 = nx.bipartite_layout(B, top_actors)
+
+nx.draw(
+    B,
+    pos2,
+    with_labels=False,
+    node_size=60,
+    node_color=color_map,
+    width=0.4,
+    alpha=0.9
+)
+
+plt.title(f"Graf dwudzielny (layout bipartite): Top {top_n_actors} aktorów i ich filmy", fontsize=16)
+plt.axis("off")
+plt.tight_layout()
+plt.show()
+
+plt.figure(figsize=(10, 6))
+plt.imshow(A.toarray(), aspect='auto', interpolation='nearest')
+plt.colorbar(label='1 = występ')
+plt.yticks(ticks=np.arange(len(top_actors)), labels=top_actors, fontsize=8)
+plt.xticks(ticks=np.arange(len(films)), labels=films, fontsize=8, rotation=90)
+plt.title(f"Heatmapa macierzy dwudzielnej (Top {len(top_actors)} aktorów × {len(films)} filmów)")
 plt.tight_layout()
 plt.show()
